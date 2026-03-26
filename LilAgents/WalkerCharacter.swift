@@ -280,8 +280,8 @@ class WalkerCharacter {
 
     func createPopoverWindow() {
         let t = resolvedTheme
-        let popoverWidth: CGFloat = 420
-        let popoverHeight: CGFloat = 310
+        let popoverWidth: CGFloat = 480
+        let popoverHeight: CGFloat = 360
 
         let win = KeyableWindow(
             contentRect: CGRect(x: 0, y: 0, width: popoverWidth, height: popoverHeight),
@@ -314,8 +314,22 @@ class WalkerCharacter {
         let titleLabel = NSTextField(labelWithString: t.titleString)
         titleLabel.font = t.titleFont
         titleLabel.textColor = t.titleText
-        titleLabel.frame = NSRect(x: 12, y: 6, width: 200, height: 16)
+        titleLabel.frame = NSRect(x: 12, y: 6, width: popoverWidth - 80, height: 16)
         titleBar.addSubview(titleLabel)
+
+        // Copy button in title bar
+        let copyBtn = NSButton(frame: NSRect(x: popoverWidth - 60, y: 4, width: 48, height: 20))
+        copyBtn.title = "copy"
+        copyBtn.font = NSFont.monospacedSystemFont(ofSize: 9, weight: .regular)
+        copyBtn.bezelStyle = .inline
+        copyBtn.isBordered = false
+        copyBtn.wantsLayer = true
+        copyBtn.layer?.backgroundColor = t.accentColor.withAlphaComponent(0.12).cgColor
+        copyBtn.layer?.cornerRadius = 4
+        copyBtn.contentTintColor = t.accentColor
+        copyBtn.target = self
+        copyBtn.action = #selector(copyLastResponseFromButton)
+        titleBar.addSubview(copyBtn)
 
         let sep = NSView(frame: NSRect(x: 0, y: popoverHeight - 29, width: popoverWidth, height: 1))
         sep.wantsLayer = true
@@ -328,6 +342,9 @@ class WalkerCharacter {
         terminal.autoresizingMask = [.width, .height]
         terminal.onSendMessage = { [weak self] message in
             self?.session?.send(message: message)
+        }
+        terminal.onClearRequested = { [weak self] in
+            self?.session?.history.removeAll()
         }
         container.addSubview(terminal)
 
@@ -368,6 +385,11 @@ class WalkerCharacter {
         }
     }
 
+    @objc func copyLastResponseFromButton() {
+        // Trigger the /copy slash command via the terminal view
+        terminalView?.handleSlashCommandPublic("/copy")
+    }
+
     private func formatToolInput(_ input: [String: Any]) -> String {
         if let cmd = input["command"] as? String { return cmd }
         if let path = input["file_path"] as? String { return path }
@@ -398,12 +420,21 @@ class WalkerCharacter {
         "let me check", "working on it", "almost...", "bear with me",
         "on it!", "gimme a sec", "brb", "processing...",
         "hang tight", "just a moment", "figuring it out",
-        "crunching...", "reading...", "looking..."
+        "crunching...", "reading...", "looking...",
+        "cooking...", "vibing...", "in the zone", "nearly there",
+        "hold that thought", "digging in...", "big brain time",
+        "connecting dots", "hold on...", "give me a sec",
+        "on it like a bonnet", "chef's kiss incoming",
+        "loading genius...", "don't rush me", "worth the wait",
+        "good question...", "let me think", "fascinating...",
+        "🤔...", "calculating...", "assembling thoughts"
     ]
 
     private static let completionPhrases = [
         "done!", "all set!", "ready!", "here you go", "got it!",
-        "finished!", "ta-da!", "voila!"
+        "finished!", "ta-da!", "voila!", "boom!", "easy.",
+        "nailed it!", "there ya go!", "check it out!", "fresh out the oven",
+        "hope that helps!", "your wish, granted", "cooking complete 🍳"
     ]
 
     private var lastPhraseUpdate: CFTimeInterval = 0
