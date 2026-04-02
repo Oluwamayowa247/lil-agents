@@ -138,19 +138,6 @@ class LilAgentsController {
         return dockDefaults?.bool(forKey: "autohide") ?? false
     }
 
-    private func shouldShowCharacters(on screen: NSScreen) -> Bool {
-        // User explicitly pinned to this screen — always show
-        if pinnedScreenIndex >= 0, pinnedScreenIndex < NSScreen.screens.count {
-            return true
-        }
-        if screenHasDock(screen) {
-            return true
-        }
-
-        let menuBarVisible = screen.visibleFrame.maxY < screen.frame.maxY
-        return dockAutohideEnabled() && menuBarVisible
-    }
-
     // MARK: - Display Link
 
     private func startDisplayLink() {
@@ -189,10 +176,24 @@ class LilAgentsController {
         return NSScreen.screens.first
     }
 
-    /// The dock lives on the screen where visibleFrame.origin.y > frame.origin.y (bottom dock)
-    /// On screens without the dock, visibleFrame.origin.y == frame.origin.y
     private func screenHasDock(_ screen: NSScreen) -> Bool {
-        return screen.visibleFrame.origin.y > screen.frame.origin.y
+        DockVisibility.screenHasVisibleDockReservedArea(
+            screenFrame: screen.frame,
+            visibleFrame: screen.visibleFrame
+        )
+    }
+
+    private func shouldShowCharacters(on screen: NSScreen) -> Bool {
+        // User explicitly pinned to this screen — always show
+        if pinnedScreenIndex >= 0, pinnedScreenIndex < NSScreen.screens.count {
+            return true
+        }
+        return DockVisibility.shouldShowCharacters(
+            screenFrame: screen.frame,
+            visibleFrame: screen.visibleFrame,
+            isMainScreen: screen == NSScreen.main,
+            dockAutohideEnabled: dockAutohideEnabled()
+        )
     }
 
     @discardableResult
